@@ -1,6 +1,15 @@
 #!/bin/bash
 
+
 set -e
+
+# Check if sudo is available
+if command -v sudo >/dev/null 2>&1; then
+  echo "🔐 Sudo detected. Will use sudo where necessary."
+else
+  echo "⚠️  Sudo not found. You must have permissions to write to DEV_HOME and install packages."
+  echo "💡 If you are a non-root user, please ensure necessary tools are pre-installed or contact your administrator."
+fi
 
 if [[ -z "$DEV_HOME" ]]; then
   if [[ -t 0 ]]; then
@@ -11,15 +20,20 @@ if [[ -z "$DEV_HOME" ]]; then
     echo "📁 Non-interactive mode: Using default DEV_HOME: $DEV_HOME"
   fi
 fi
-if [[ ! -d "$DEV_HOME" ]]; then
-  echo "📁 Creating DEV_HOME directory: $DEV_HOME"
-  mkdir -p "$DEV_HOME"
+
+# Check and fallback if not writable
+if [[ ! -w "$(dirname "$DEV_HOME")" ]]; then
+  echo "⚠️ DEV_HOME ($DEV_HOME) is not writable without sudo."
+  if command -v sudo >/dev/null 2>&1; then
+    echo "🔐 Attempting to create $DEV_HOME with sudo..."
+    sudo mkdir -p "$DEV_HOME"
+    sudo chown -R $(whoami):$(whoami) "$DEV_HOME"
+  else
+    echo "❌ Cannot write to $DEV_HOME and no sudo available. Exiting."
+    exit 1
+  fi
 else
-  echo "📁 Using existing DEV_HOME directory: $DEV_HOME"
-fi
-if [[ ! -w "$DEV_HOME" ]]; then
-  echo "❌ Permission denied to write to $DEV_HOME. Please check your permissions."
-  exit 1
+  mkdir -p "$DEV_HOME"
 fi
 BIN_DIR="$DEV_HOME/bin"
 PYENV_ROOT="$DEV_HOME/.pyenv"

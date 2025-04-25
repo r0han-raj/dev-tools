@@ -15,6 +15,22 @@ if [[ -z "$DEV_HOME" ]]; then
     echo "📁 Non-interactive mode: Using default DEV_HOME: $DEV_HOME"
   fi
 fi
+
+# Check and create DEV_HOME if needed
+if [[ ! -w "$(dirname "$DEV_HOME")" ]]; then
+  echo "⚠️ DEV_HOME ($DEV_HOME) is not writable without sudo."
+  if command -v sudo >/dev/null 2>&1; then
+    echo "🔐 Attempting to create $DEV_HOME with sudo..."
+    sudo mkdir -p "$DEV_HOME"
+    sudo chown -R $(whoami):$(whoami) "$DEV_HOME"
+  else
+    echo "❌ Cannot write to $DEV_HOME and no sudo available. Exiting."
+    exit 1
+  fi
+else
+  mkdir -p "$DEV_HOME"
+fi
+
 export PYENV_ROOT="$DEV_HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$DEV_HOME/bin:$PATH"
 [[ -d "/home/linuxbrew/.linuxbrew/bin" ]] && export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
