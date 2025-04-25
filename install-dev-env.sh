@@ -100,7 +100,10 @@ install_tools() {
 
 deploy_mkpyenv() {
   echo "📥 Installing mkpyenv to $BIN_DIR"
-  curl -sSL https://raw.githubusercontent.com/r0han-raj/dev-tools/main/mkpyenv -o "$BIN_DIR/mkpyenv"
+  curl -fLsS https://raw.githubusercontent.com/r0han-raj/dev-tools/main/mkpyenv -o "$BIN_DIR/mkpyenv" || {
+    echo "❌ Failed to download mkpyenv. Please check your internet connection or GitHub URL."
+    exit 1
+  }
   chmod +x "$BIN_DIR/mkpyenv"
 }
 

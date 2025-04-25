@@ -6,14 +6,12 @@ set -e
 
 #
 # Load environment (handle interactive and non-interactive shells for DEV_HOME)
-if [[ -z "$DEV_HOME" ]]; then
-  if [[ -t 0 ]]; then
-    read -p "📁 Enter your DEV_HOME path (default: /u01/dev): " INPUT_DEV_HOME
-    export DEV_HOME="${INPUT_DEV_HOME:-/u01/dev}"
-  else
-    export DEV_HOME="/u01/dev"
-    echo "📁 Non-interactive mode: Using default DEV_HOME: $DEV_HOME"
-  fi
+if [[ -t 0 ]]; then
+  read -p "📁 Enter your DEV_HOME path (default: /u01/dev): " INPUT_DEV_HOME
+  export DEV_HOME="${INPUT_DEV_HOME:-/u01/dev}"
+else
+  export DEV_HOME="${DEV_HOME:-/u01/dev}"
+  echo "📁 Non-interactive mode: Using default DEV_HOME: $DEV_HOME"
 fi
 
 # Check and create DEV_HOME if needed
