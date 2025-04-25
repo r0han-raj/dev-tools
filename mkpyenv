@@ -4,8 +4,17 @@
 
 set -e
 
-# Load environment (for non-interactive shells)
-export DEV_HOME="${DEV_HOME:-/u01/dev}"
+#
+# Load environment (handle interactive and non-interactive shells for DEV_HOME)
+if [[ -z "$DEV_HOME" ]]; then
+  if [[ -t 0 ]]; then
+    read -p "📁 Enter your DEV_HOME path (default: /u01/dev): " INPUT_DEV_HOME
+    export DEV_HOME="${INPUT_DEV_HOME:-/u01/dev}"
+  else
+    export DEV_HOME="/u01/dev"
+    echo "📁 Non-interactive mode: Using default DEV_HOME: $DEV_HOME"
+  fi
+fi
 export PYENV_ROOT="$DEV_HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$DEV_HOME/bin:$PATH"
 [[ -d "/home/linuxbrew/.linuxbrew/bin" ]] && export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"

@@ -2,8 +2,25 @@
 
 set -e
 
-read -p "📁 Enter your preferred DEV_HOME directory (default: /u01/dev): " INPUT_DEV_HOME
-DEV_HOME="${INPUT_DEV_HOME:-/u01/dev}"
+if [[ -z "$DEV_HOME" ]]; then
+  if [[ -t 0 ]]; then
+    read -p "📁 Enter your DEV_HOME path (default: /u01/dev): " INPUT_DEV_HOME
+    export DEV_HOME="${INPUT_DEV_HOME:-/u01/dev}"
+  else
+    export DEV_HOME="/u01/dev"
+    echo "📁 Non-interactive mode: Using default DEV_HOME: $DEV_HOME"
+  fi
+fi
+if [[ ! -d "$DEV_HOME" ]]; then
+  echo "📁 Creating DEV_HOME directory: $DEV_HOME"
+  mkdir -p "$DEV_HOME"
+else
+  echo "📁 Using existing DEV_HOME directory: $DEV_HOME"
+fi
+if [[ ! -w "$DEV_HOME" ]]; then
+  echo "❌ Permission denied to write to $DEV_HOME. Please check your permissions."
+  exit 1
+fi
 BIN_DIR="$DEV_HOME/bin"
 PYENV_ROOT="$DEV_HOME/.pyenv"
 
