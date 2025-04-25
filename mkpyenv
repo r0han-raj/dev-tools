@@ -1,1 +1,89 @@
-404: Not Found
+#!/bin/bash
+
+# mkpyenv - CLI tool to create Python dev environments interactively
+
+set -e
+
+# Load environment (for non-interactive shells)
+export DEV_HOME="${DEV_HOME:-/u01/dev}"
+export PYENV_ROOT="$DEV_HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$DEV_HOME/bin:$PATH"
+[[ -d "/home/linuxbrew/.linuxbrew/bin" ]] && export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+
+if command -v pyenv &>/dev/null; then
+  eval "$(pyenv init -)"
+  eval "$(pyenv virtualenv-init -)"
+fi
+
+usage() {
+  echo "Usage: mkpyenv [-p python_version] [-n project_name] [-m manager]"
+  echo "  -p  Python version (e.g., 3.12.10)"
+  echo "  -n  Project name/folder"
+  echo "  -m  Manager (pipenv or poetry)"
+  exit 1
+}
+
+PYTHON_VERSION=""
+PROJECT_NAME=""
+MANAGER=""
+
+while getopts ":p:n:m:" opt; do
+  case ${opt} in
+    p ) PYTHON_VERSION=$OPTARG ;;
+    n ) PROJECT_NAME=$OPTARG ;;
+    m ) MANAGER=$OPTARG ;;
+    * ) usage ;;
+  esac
+done
+
+if [[ -z "$PYTHON_VERSION" ]]; then
+  echo "🔢 Choose Python version via pyenv:"
+  PYTHON_VERSION=$(pyenv versions --bare | fzf)
+fi
+
+if [[ -z "$PROJECT_NAME" ]]; then
+  read -p "📁 Enter project folder name: " PROJECT_NAME
+fi
+
+if [[ -z "$MANAGER" ]]; then
+  echo "🧪 Choose environment manager:"
+  MANAGER=$(echo -e "pipenv\npoetry" | fzf)
+fi
+
+mkdir -p "$PROJECT_NAME"
+cd "$PROJECT_NAME" || exit 1
+
+echo "🔧 Setting up project with $MANAGER and Python $PYTHON_VERSION..."
+
+PYTHON_BIN="$PYENV_ROOT/versions/$PYTHON_VERSION/bin/python"
+
+if [[ "$MANAGER" == "pipenv" ]]; then
+  PIPENV_PYTHON=$PYTHON_BIN PIPENV_IGNORE_VENV=1 pipenv install --python $PYTHON_BIN
+elif [[ "$MANAGER" == "poetry" ]]; then
+  poetry init --no-interaction
+  poetry env use $PYTHON_BIN
+else
+  echo "❌ Unknown manager: $MANAGER"
+  exit 1
+fi
+
+read -p "🔃 Init git repo? (y/n): " INIT_GIT
+if [[ "$INIT_GIT" == "y" ]]; then
+  git init
+  echo "__pycache__/\n.venv/\n*.pyc" > .gitignore
+  git add .
+  git commit -m "Initial commit"
+fi
+
+read -p "🌐 Create GitHub repo? (y/n): " GH_PUSH
+if [[ "$GH_PUSH" == "y" ]]; then
+  read -p "🔗 GitHub repo URL: " GH_URL
+  git remote add origin "$GH_URL"
+  git branch -M main
+  git push -u origin main
+fi
+
+echo "✅ Project $PROJECT_NAME is ready!"
+echo "💡 To activate:"
+[[ "$MANAGER" == "pipenv" ]] && echo "cd $PROJECT_NAME && pipenv shell"
+[[ "$MANAGER" == "poetry" ]] && echo "cd $PROJECT_NAME && poetry shell"

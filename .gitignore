@@ -1,1 +1,6 @@
-404: Not Found
+__pycache__/
+.venv/
+*.pyc
+.env
+.idea/
+.DS_Store
